@@ -1,0 +1,6 @@
+.build
+.git
+.github
+.gitignore
+.ssl
+openapi.yaml

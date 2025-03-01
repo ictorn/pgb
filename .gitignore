@@ -1,0 +1,10 @@
+.DS_Store
+/.build
+/.swiftpm
+/.vscode
+/.devContainer
+/Packages
+/*.xcodeproj
+xcuserdata/
+.idea
+.env
