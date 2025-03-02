@@ -1,3 +1,6 @@
+// © 2025 Tomasz Sądej
+// SPDX-License-Identifier: MIT
+
 import Foundation
 import ArgumentParser
 

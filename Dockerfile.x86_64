@@ -35,3 +35,9 @@ COPY --from=app /release/pgb /pgb
 STOPSIGNAL SIGTERM
 
 ENTRYPOINT ["/pgb"]
+
+LABEL org.opencontainers.image.source=https://github.com/ictorn/pgb
+LABEL org.opencontainers.image.description="Postgres Backup Tool"
+LABEL org.opencontainers.image.licenses=MIT
+LABEL org.opencontainers.image.authors="Tomasz Sądej"
+LABEL org.opencontainers.image.base.name="ictorn/pgb:latest"
