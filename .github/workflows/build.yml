@@ -29,7 +29,7 @@ jobs:
 
   build-arm:
     timeout-minutes: 30
-    runs-on: ubuntu-20.04-arm
+    runs-on: ubuntu-24.04-arm
     name: build and push temporary image for ARM
     steps:
     - uses: actions/checkout@v4
