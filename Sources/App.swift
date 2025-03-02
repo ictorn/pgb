@@ -12,19 +12,22 @@ struct App: AsyncParsableCommand {
         case s3, local
     }
 
-    @Option(name: .long, help: .init("path to pg_dump executable", valueName: "path"))
+    @Option(name: .long, help: .init("full path to pg_dump executable", valueName: "path"))
     var pgDumpPath: String = "/dump"
     
-    @Option(name: .long, help: .init("dump filename prefix", valueName: "value"))
+    @Option(name: .long, help: .init("prefix for dump filename ", valueName: "value"))
     var prefix: String? = nil
     
-    @Option(name: .shortAndLong, help: .init("storage to upload dumped file [s3, local]", valueName: "value"))
+    @Option(name: .shortAndLong, help: .init("storage location for dumped file [s3, local]", valueName: "value"))
     var storage: StorageType = .s3
     
     @Option(name: .shortAndLong, help: .init("destination directory for dumped file", valueName: "path"))
     var directory: String = ".backups/db/"
-    
-    @Option(name: .shortAndLong, help: "number of backups to keep [set 0 to keep all]")
+
+    @Option(name: .shortAndLong, help: .init("extension for dumped file", valueName: "value"))
+    var `extension`: String = "pgb"
+
+    @Option(name: .shortAndLong, help: "number of backups to retain [set 0 to keep all]")
     var keep: Int = 2
 
     private let env: Environment
