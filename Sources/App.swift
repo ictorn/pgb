@@ -52,6 +52,10 @@ struct App: AsyncParsableCommand {
                 print(error)
             }
             
+            if keep > 0 {
+                try await s3.cleanup(directory, keep: keep)
+            }
+            
             try await s3.done()
 
         case .local:
@@ -85,7 +89,14 @@ struct App: AsyncParsableCommand {
             let dump = Process()
 
             dump.executableURL = URL(fileURLWithPath: pgDumpPath)
-            dump.arguments = ["-Fc", "-Z", "9", "--exclude-schema", "public", "-f", file.path(percentEncoded: false), try env.get("PGB_CONNECTION_URI", require: true)!]
+            dump.arguments = [
+                "-Fc",
+                "--no-acl",
+                "-Z", "9",
+                "--exclude-schema", "public",
+                "-f", file.path(percentEncoded: false),
+                try env.get("PGB_CONNECTION_URI", require: true)!
+            ]
 
             let pipe = Pipe()
             dump.standardOutput = pipe

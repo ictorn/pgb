@@ -16,16 +16,16 @@ struct S3 {
         self.bucket = bucket
     }
 
-    func send(file: URL, directory: String? = nil) async throws {
-        var destination: String = file.lastPathComponent
-        if var directory = directory {
-            if directory.last != "/" {
-                destination = "/" + destination
-            }
-            if directory.first == "/" {
-                directory.removeFirst()
-            }
-            destination = directory + destination
+    func send(file: URL, directory: String) async throws {
+        var destination: String
+        if directory.hasSuffix("/") {
+            destination = directory + file.lastPathComponent
+        } else {
+            destination = directory + "/" + file.lastPathComponent
+        }
+
+        if destination.hasPrefix("/") {
+            destination.trimPrefix("/")
         }
 
         try await transfer.copy(
@@ -33,6 +33,27 @@ struct S3 {
             to: S3File(url: "s3://\(bucket)/\(destination)")!
         )
     }
-    
+
+    func cleanup(_ directory: String, keep: UInt8) async throws {
+        var directory = directory
+        if directory.hasPrefix("/") {
+            directory.trimPrefix("/")
+        }
+        
+        let dumps = try await transfer.listFiles(in: S3Folder(url: "s3://\(bucket)/\(directory)")!).filter { $0.file.extension == "pg" }
+        if dumps.count > keep {
+            print("\nFound \(dumps.count) dumps. Keeping \(keep) newest.", terminator: "\n\n")
+
+            let count = dumps.count - Int(keep)
+            for dump in dumps.min(count: count, sortedBy: { $0.file.name < $1.file.name }) {
+                print("deleting \"", dump.file.name, "\"...", separator: "",  terminator: " ")
+                fflush(stdout)
+                
+                try await transfer.delete(dump.file)
+                print("DONE")
+            }
+        }
+    }
+
     func done() async throws { try await transfer.s3.client.shutdown() }
 }
