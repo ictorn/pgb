@@ -75,11 +75,10 @@ jobs:
     - name: create and push new manifest
       run: |
         docker buildx imagetools create \
-          --annotation "org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
-          --annotation "org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
-          --annotation "org.opencontainers.image.licenses=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.licenses'] }}" \
-          --annotation "org.opencontainers.image.authors=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.authors'] }}" \
-          --annotation "org.opencontainers.image.base.name=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.base.name'] }}" \
+          --annotation "index,manifest:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
+          --annotation "index,manifest:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
+          --annotation "index,manifest:org.opencontainers.image.licenses=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.licenses'] }}" \
+          --annotation "index,manifest:org.opencontainers.image.authors=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.authors'] }}" \
           -t ghcr.io/${{ github.repository }}:${{ github.event.release.name }} \
           -t ghcr.io/${{ github.repository }}:latest \
           ghcr.io/${{ github.repository }}:${{ github.sha }}-x86 \
