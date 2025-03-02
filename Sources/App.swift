@@ -15,9 +15,6 @@ struct App: AsyncParsableCommand {
     @Option(name: .long, help: .init("full path to pg_dump executable", valueName: "path"))
     var pgDumpPath: String = "/dump"
     
-    @Option(name: .long, help: .init("prefix for dump filename ", valueName: "value"))
-    var prefix: String? = nil
-    
     @Option(name: .shortAndLong, help: .init("storage location for dumped file [s3, local]", valueName: "value"))
     var storage: StorageType = .s3
     
@@ -84,12 +81,8 @@ struct App: AsyncParsableCommand {
         if fileManager.fileExists(atPath: pgDumpPath) {
             let date = ISO8601DateFormatter()
             date.timeZone = TimeZone(abbreviation: "UTC")
-            
-            var name: String = date.string(from: Date()) + ".pg";
-            if let prefix = prefix {
-                name = prefix + "_" + name
-            }
-            
+
+            let name = date.string(from: Date()) + "." + `extension`
             let file = URL(fileURLWithPath: fileManager.currentDirectoryPath).appendingPathComponent(name)
 
             let dump = Process()
@@ -121,7 +114,7 @@ struct App: AsyncParsableCommand {
                 formatter.allowedUnits = [.useKB, .useMB, .useGB]
                 formatter.countStyle = .file
 
-                print("\(file.lastPathComponent) [\(formatter.string(fromByteCount: size))]", terminator: "\n\n")
+                print("\(name) [\(formatter.string(fromByteCount: size))]", terminator: "\n\n")
                 
                 try await upload(file)
                 
