@@ -1,5 +1,4 @@
 name: build image
-name: deploy to production
 on:
   release:
     types: [ published ]
