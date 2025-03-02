@@ -23,10 +23,9 @@ jobs:
     - uses: docker/build-push-action@v6
       with:
         context: .
+        file: Dockerfile.x86_64
         push: true
         platforms: linux/amd64
-        build-args: |
-          ARCH=x86_64
         tags: ghcr.io/${{ github.repository }}:${{ github.sha }}-x86
 
   build-arm:
@@ -44,10 +43,9 @@ jobs:
     - uses: docker/build-push-action@v6
       with:
         context: .
+        file: Dockerfile.aarch64
         push: true
         platforms: linux/arm64
-        build-args: |
-          ARCH=aarch64
         tags: ghcr.io/${{ github.repository }}:${{ github.sha }}-arm
         
   manifest:
