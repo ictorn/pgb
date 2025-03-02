@@ -25,7 +25,7 @@ struct App: AsyncParsableCommand {
     var directory: String = ".backups/db/"
     
     @Option(name: .shortAndLong, help: "number of backups to keep [set 0 to keep all]")
-    var keep: UInt8 = 2
+    var keep: Int = 2
 
     private let env: Environment
     

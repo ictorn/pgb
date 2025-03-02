@@ -37,7 +37,7 @@ struct S3 {
         )
     }
 
-    func cleanup(_ directory: String, keep: UInt8) async throws {
+    func cleanup(_ directory: String, keep: Int) async throws {
         var directory = directory
         if directory.hasPrefix("/") {
             directory.trimPrefix("/")
@@ -47,7 +47,7 @@ struct S3 {
         if dumps.count > keep {
             print("\nFound \(dumps.count) dumps. Keeping \(keep) newest.", terminator: "\n\n")
 
-            let count = dumps.count - Int(keep)
+            let count = dumps.count - keep
             for dump in dumps.min(count: count, sortedBy: { $0.file.name < $1.file.name }) {
                 print("deleting \"", dump.file.name, "\"...", separator: "",  terminator: " ")
                 fflush(stdout)
