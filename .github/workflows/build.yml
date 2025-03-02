@@ -9,8 +9,9 @@ permissions:
 
 jobs:
   build-x86:
-    group: tmp
-    cancel-in-progress: true
+    concurrency:
+      group: tmp
+      cancel-in-progress: true
     timeout-minutes: 30
     runs-on: ubuntu-24.04
     name: build and push temporary image for x86_64
@@ -30,8 +31,9 @@ jobs:
         tags: ghcr.io/${{ github.repository }}:${{ github.sha }}-x86
 
   build-arm:
-    group: tmp
-    cancel-in-progress: true
+    concurrency:
+      group: tmp
+      cancel-in-progress: true
     timeout-minutes: 30
     runs-on: ubuntu-20.04-arm
     name: build and push temporary image for ARM
