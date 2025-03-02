@@ -1,0 +1,76 @@
+name: build image
+name: deploy to production
+on:
+  release:
+    types: [ published ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-x86:
+    group: tmp
+    cancel-in-progress: true
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    name: build and push temporary image for x86_64
+    steps:
+    - uses: actions/checkout@v4
+    - uses: docker/login-action@v3
+      name: login to ghcr.io
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        platforms: linux/amd64
+        tags: ghcr.io/${{ github.repository }}:${{ github.sha }}-x86
+
+  build-arm:
+    group: tmp
+    cancel-in-progress: true
+    timeout-minutes: 30
+    runs-on: ubuntu-20.04-arm
+    name: build and push temporary image for ARM
+    steps:
+    - uses: actions/checkout@v4
+    - uses: docker/login-action@v3
+      name: login to ghcr.io
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        platforms: linux/arm64
+        tags: ghcr.io/${{ github.repository }}:${{ github.sha }}-arm
+        
+  manifest:
+    needs:
+    - build-x86
+    - build-arm
+    timeout-minutes: 10
+    runs-on: ubuntu-20.04
+    name: merge images
+    steps:
+    - uses: docker/login-action@v3
+      name: login to ghcr.io
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: merge images
+      run: docker manifest create ghcr.io/${{ github.repository }}:${{ github.event.release.name }} ghcr.io/${{ github.repository }}:${{ github.sha }}-x86 ghcr.io/${{ github.repository }}:${{ github.sha }}-arm
+    - name: push merged image
+      run: docker manifest push ghcr.io/${{ github.repository }}:${{ github.event.release.name }}
+    - name: update latest tag 
+      run: |
+        docker tag ghcr.io/${{ github.repository }}:${{ github.event.release.name }} ghcr.io/${{ github.repository }}:latest
+        docker push ghcr.io/${{ github.repository }}:latest
+#TODO: remove temp images
