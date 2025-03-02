@@ -59,18 +59,29 @@ jobs:
     runs-on: ubuntu-24.04
     name: merge images
     steps:
+    - name: get metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}:${{ github.sha }}-x86
+    - name: set up docker buildx
+      uses: docker/setup-buildx-action@v3
     - uses: docker/login-action@v3
       name: login to ghcr.io
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    - name: merge images
+    - name: create and push new manifest
       run: |
-        docker manifest create ghcr.io/${{ github.repository }}:${{ github.event.release.name }} ghcr.io/${{ github.repository }}:${{ github.sha }}-x86 ghcr.io/${{ github.repository }}:${{ github.sha }}-arm
-        docker manifest create ghcr.io/${{ github.repository }}:latest ghcr.io/${{ github.repository }}:${{ github.sha }}-x86 ghcr.io/${{ github.repository }}:${{ github.sha }}-arm
-    - name: push merged image
-      run: |
-        docker manifest push ghcr.io/${{ github.repository }}:${{ github.event.release.name }}
-        docker manifest push ghcr.io/${{ github.repository }}:latest
+        docker buildx imagetools create \
+          --annotation "org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
+          --annotation "org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
+          --annotation "org.opencontainers.image.licenses=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.licenses'] }}" \
+          --annotation "org.opencontainers.image.authors=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.authors'] }}" \
+          --annotation "org.opencontainers.image.base.name=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.base.name'] }}" \
+          -t ghcr.io/${{ github.repository }}:${{ github.event.release.name }} \
+          -t ghcr.io/${{ github.repository }}:latest \
+          ghcr.io/${{ github.repository }}:${{ github.sha }}-x86 \
+          ghcr.io/${{ github.repository }}:${{ github.sha }}-arm
 #TODO: remove temp images
