@@ -1,3 +1,5 @@
+ARG ARCH=x86_64
+
 FROM swift:6.0.3 AS app
 
 ARG SDK_BUNDLE="0.0.1"
@@ -10,11 +12,11 @@ WORKDIR /build
 COPY . .
 
 RUN swift package resolve
-RUN swift build -c release --swift-sdk x86_64-swift-linux-musl
+RUN swift build -c release --swift-sdk ${ARCH}-swift-linux-musl
 
 WORKDIR /release
 
-RUN cp "$(swift build --package-path /build -c release --swift-sdk x86_64-swift-linux-musl --show-bin-path)/pgb" ./pgb
+RUN cp "$(swift build --package-path /build -c release --swift-sdk ${ARCH}-swift-linux-musl --show-bin-path)/pgb" ./pgb
 
 FROM alpine AS psql
 
@@ -22,7 +24,7 @@ RUN apk add --no-cache postgresql-client
 
 FROM gcr.io/distroless/static
 
-COPY --from=psql /lib/ld-musl-x86_64.so.1 /lib/ld-musl-x86_64.so.1
+COPY --from=psql /lib/ld-musl-${ARCH}.so.1 /lib/ld-musl-${ARCH}.so.1
 COPY --from=psql /usr/lib/libpq.so.5 /usr/lib/libpq.so.5
 COPY --from=psql /usr/lib/libzstd.so.1 /usr/lib/libzstd.so.1
 COPY --from=psql /usr/lib/libssl.so.3 /usr/lib/libssl.so.3

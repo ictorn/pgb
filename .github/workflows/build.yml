@@ -25,6 +25,8 @@ jobs:
         context: .
         push: true
         platforms: linux/amd64
+        build-args:
+        - ARCH: x86_64
         tags: ghcr.io/${{ github.repository }}:${{ github.sha }}-x86
 
   build-arm:
@@ -44,11 +46,13 @@ jobs:
         context: .
         push: true
         platforms: linux/arm64
+        build-args:
+        - ARCH: aarch64
         tags: ghcr.io/${{ github.repository }}:${{ github.sha }}-arm
         
   manifest:
     concurrency:
-      group: build
+      group: final
       cancel-in-progress: true
     needs:
     - build-x86
