@@ -94,7 +94,6 @@ struct App: AsyncParsableCommand {
             dump.executableURL = URL(fileURLWithPath: pgDumpPath)
             dump.arguments = [
                 "-Fc",
-                "--no-acl",
                 "-Z", "9",
                 "--exclude-schema", "public",
                 "-f", file.path(percentEncoded: false),
