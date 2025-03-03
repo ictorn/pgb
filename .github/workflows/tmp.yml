@@ -6,8 +6,7 @@ permissions:
   packages: write
 
 env:
-  GHCR_IMAGE: ghcr.io/${{ github.repository }}:test
-  DH_IMAGE: ictorn/pgb:test
+  REGISTRY_IMAGE: ictorn/pgb:test
 
 jobs:
   build:
@@ -25,45 +24,57 @@ jobs:
     timeout-minutes: 30
     name: create images
     steps:
+      - name: prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ${{ env.GHCR_IMAGE }}
+          images: ${{ env.REGISTRY_IMAGE }}
       - name: login to DH
         uses: docker/login-action@v3
         with:
           username: ${{ vars.DH_USER }}
           password: ${{ secrets.DH_TOKEN }}
-      - name: login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: build and push images
+      - name: build and push by digests
         uses: docker/build-push-action@v6
         id: build
         with:
-          push: true
+          provenance: false
           context: .
           file: Dockerfile.test
           build-args: |
             ARCH=${{ matrix.arch }}
           platforms: ${{ matrix.platform }}
-          tags: |
-            ${{ env.DH_IMAGE }}-${{ matrix.arch }}
-            ${{ env.GHCR_IMAGE }}-${{ matrix.arch }}
-          annotations: |
-            org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}
-            org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
+          tags: ${{ env.REGISTRY_IMAGE }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+      - name: export digests
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+      - name: upload digests
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
   
   merge:
     runs-on: ubuntu-24.04
     needs:
     - build
     steps:
+    - name: download digests
+      uses: actions/download-artifact@v4
+      with:
+        path: ${{ runner.temp }}/digests
+        pattern: digests-*
+        merge-multiple: true
     - uses: docker/setup-buildx-action@v3
     - uses: docker/metadata-action@v5
       id: meta
@@ -74,25 +85,28 @@ jobs:
       with:
         username: ${{ vars.DH_USER }}
         password: ${{ secrets.DH_TOKEN }}
-    - name: create shared manifest for DH
+    - name: create manifest and push
+      working-directory: ${{ runner.temp }}/digests 
       run: |
         docker buildx imagetools create \
           --annotation "index:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
           --annotation "index:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
-          -t ${{ env.DH_IMAGE }}:test \
-          ${{ env.DH_IMAGE }}:test-x86_64
-          ${{ env.DH_IMAGE }}:test-aarch64
+          -t ${{ env.REGISTRY_IMAGE }}:test \
+          $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+    - name: inspect image
+      run: |
+        docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:test
     - name: login to GHCR
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    - name: create shared manifest for GHCR
+    - name: publish image in GHCR
       run: |
         docker buildx imagetools create \
           --annotation "index:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
           --annotation "index:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
-          -t ${{ env.GHCR_IMAGE }}:test \
-          ${{ env.GHCR_IMAGE }}:test-x86_64
-          ${{ env.GHCR_IMAGE }}:test-aarch64
+          -t ghcr.io/${{ github.repository }}test \
+          ${{ env.REGISTRY_IMAGE }}:test
+   
