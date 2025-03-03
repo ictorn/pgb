@@ -64,10 +64,10 @@ jobs:
     - name: get metadata
       id: meta
       uses: docker/metadata-action@v5
+      env:
+        DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
       with:
         images: ghcr.io/${{ github.repository }}:${{ github.event.release.name }}-x86_64
-        env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
     - name: set up docker buildx
       uses: docker/setup-buildx-action@v3
     - uses: docker/login-action@v3
