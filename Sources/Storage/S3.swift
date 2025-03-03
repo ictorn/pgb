@@ -57,8 +57,8 @@ struct S3: Storage {
         if directory.hasPrefix("/") {
             directory.trimPrefix("/")
         }
-        
-        let dumps = try await transfer.listFiles(in: S3Folder(url: "s3://\(bucket)/\(directory)")!).filter { $0.file.extension == "pg" }
+
+        let dumps = try await transfer.listFiles(in: S3Folder(url: "s3://\(bucket)/\(directory)")!).filter { $0.file.extension == "pgb" }
         if dumps.count > keep {
             print("\nFound \(dumps.count) backups. Keeping \(keep) newest.", terminator: "\n\n")
 

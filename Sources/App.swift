@@ -15,7 +15,7 @@ struct App: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "pgb",
         abstract: "Postgres Backup Tool",
-        version: "2025.3.3"
+        version: "2025.3.3a"
     )
 
     enum StorageType: String, ExpressibleByArgument {
@@ -31,11 +31,11 @@ struct App: AsyncParsableCommand {
     @Option(name: .shortAndLong, help: .init("destination directory for backup file", valueName: "path"))
     var directory: String = ".backups/db/"
 
-    @Option(name: .shortAndLong, help: .init("extension for backup file", valueName: "string"))
-    var `extension`: String = "pgb"
-
     @Option(name: .shortAndLong, help: .init("number of backups to retain [set 0 to keep all]", valueName: "int"))
     var keep: Int = 2
+
+    @Flag(name: .long, help: "do not exclude public schema from backup")
+    var keepPublicSchema: Bool = false
 
     private let env: Environment
 
@@ -77,19 +77,23 @@ struct App: AsyncParsableCommand {
         let fileManager: FileManager = .default
 
         if fileManager.fileExists(atPath: pgDumpPath) {
-            let name = ISO8601DateFormatter.string(from: Date(), timeZone: .gmt, formatOptions: [.withFullDate, .withTime, .withTimeZone]) + "." + `extension`
+            let name = ISO8601DateFormatter.string(from: Date(), timeZone: .gmt, formatOptions: [.withFullDate, .withTime, .withTimeZone]) + ".pgb"
             let file = fileManager.temporaryDirectory.appendingPathComponent(name)
 
             let dump = Process()
 
             dump.executableURL = URL(fileURLWithPath: pgDumpPath)
-            dump.arguments = [
-                "-Fc",
-                "-Z", "9",
-                "--exclude-schema", "public",
-                "-f", file.path(percentEncoded: false),
-                try env.get("PGB_CONNECTION_URI", require: true)!
-            ]
+
+            var arguments: [String] = ["-Fc", "-Z", "9", "-f", file.path(percentEncoded: false)]
+
+            if !keepPublicSchema {
+                arguments.append("--exclude-schema")
+                arguments.append("public")
+            }
+
+            arguments.append(try env.get("PGB_CONNECTION_URI", require: true)!)
+
+            dump.arguments = arguments
 
             let pipe = Pipe()
             dump.standardOutput = pipe

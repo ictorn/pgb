@@ -1,7 +1,8 @@
 # Postgres Backup Tool
 Command line tool for creating PostgreSQL database backups (using the `pg_dump` utility) and automatically sending the generated dump to an external storage (e.g., S3).
 
-Name of the backup file will be set from current date and time expressed according to ISO 8601.
+- outputs a custom-format archive `-Fc`
+- name of the backup file will be set from current date and time expressed according to ISO 8601 `2025-01-01T000000Z.pgb`.
 
 ## Configuration
 Configuration is done by defining environment variables listed below.
@@ -25,9 +26,9 @@ Docker image available at [GitHub Container Registry](https://github.com/ictorn/
 USAGE: pgb [--pg-dump-path <path>] [--storage <string>] [--directory <path>] [--extension <string>] [--keep <int>]
 
 OPTIONS:
-  --pg-dump-path    <path>      full path to pg_dump executable                 (default: /dump)
-  -s, --storage     <string>    storage location for backup file [s3, local]    (default: s3)
-  -d, --directory   <path>      destination directory for backup file           (default: .backups/db/)
-  -e, --extension   <string>    extension for backup file                       (default: pgb)
-  -k, --keep        <int>       number of backups to retain [set 0 to keep all] (default: 2)
+  --pg-dump-path        <path>      full path to pg_dump executable                 (default: /dump)
+  -s, --storage         <string>    storage location for backup file [s3, local]    (default: s3)
+  -d, --directory       <path>      destination directory for backup file           (default: .backups/db/)
+  -k, --keep            <int>       number of backups to retain [set 0 to keep all] (default: 2)
+  --keep-public-schema              do not exclude public schema from backup
 ```
