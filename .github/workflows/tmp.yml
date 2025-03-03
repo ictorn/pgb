@@ -52,7 +52,9 @@ jobs:
           build-args: |
             ARCH=${{ matrix.arch }}
           platforms: ${{ matrix.platform }}
-          tags: ${{ env.DH_IMAGE }}-${{ matrix.arch }} ${{ env.GHCR_IMAGE }}-${{ matrix.arch }}
+          tags: |
+            ${{ env.DH_IMAGE }}-${{ matrix.arch }}
+            ${{ env.GHCR_IMAGE }}-${{ matrix.arch }}
           annotations: |
             org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}
             org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
