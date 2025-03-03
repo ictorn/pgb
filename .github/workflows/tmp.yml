@@ -54,6 +54,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          provenance: false
       - name: export digests
         run: |
           mkdir -p ${{ runner.temp }}/digests
