@@ -54,13 +54,13 @@ jobs:
           annotations: |
             "org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}"
             "org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}"
-          outputs: |
-            "type=image"
-            "push-by-digest=true"
-            "name-canonical=true"
-            "push=true"
-            "annotation-index.org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}"
-            "annotation-index.org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}"
+          outputs: >>
+            type=image,
+            push-by-digest=true,
+            name-canonical=true,
+            push=true,
+            annotation-index.org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }},
+            annotation-index.org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
       - name: export digests
         run: |
           mkdir -p ${{ runner.temp }}/digests
