@@ -1,0 +1,15 @@
+ARG ARCH=x86_64
+
+FROM alpine
+
+ARG ARCH
+
+RUN echo "ARCH: ${ARCH}"
+RUN apk add --no-cache postgresql-client
+
+ENTRYPOINT ["/usr/bin/pg_dump"]
+
+LABEL org.opencontainers.image.source=https://github.com/ictorn/pgb
+LABEL org.opencontainers.image.description="Postgres Backup Tool"
+LABEL org.opencontainers.image.licenses=MIT
+LABEL org.opencontainers.image.authors="Tomasz Sądej"
