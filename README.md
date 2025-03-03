@@ -18,12 +18,8 @@ Configuration is done by defining environment variables listed below.
 - `PGB_S3_BUCKET`: bucket name
 
 ## Usage
-Docker image available at [GitHub Container Registry](https://github.com/ictorn/pgb/pkgs/container/pgb).
-
-`docker run --pull always --rm ghcr.io/ictorn/pgb`
-
 ```txt
-USAGE: pgb [--pg-dump-path <path>] [--storage <string>] [--directory <path>] [--extension <string>] [--keep <int>]
+pgb [--pg-dump-path <path>] [--storage <string>] [--directory <path>] [--extension <string>] [--keep <int>]
 
 OPTIONS:
   --pg-dump-path        <path>      full path to pg_dump executable                 (default: /usr/bin/pg_dump)
@@ -32,3 +28,9 @@ OPTIONS:
   -k, --keep            <int>       number of backups to retain [set 0 to keep all] (default: 2)
   --keep-public-schema              do not exclude public schema from backup
 ```
+
+### Docker image available at:
+- [GitHub Container Registry](https://github.com/ictorn/pgb/pkgs/container/pgb)
+  `docker run --pull always --rm ghcr.io/ictorn/pgb`
+- [Docker Hub](https://hub.docker.com/r/ictorn/pgb)
+  `docker run --pull always --rm ictorn/pgb`
