@@ -30,7 +30,7 @@ OPTIONS:
 ```
 
 ### Docker image available at:
-- [GitHub Container Registry](https://github.com/ictorn/pgb/pkgs/container/pgb)
+- [GitHub Container Registry](https://github.com/ictorn/pgb/pkgs/container/pgb)  
   `docker run --pull always --rm ghcr.io/ictorn/pgb`
-- [Docker Hub](https://hub.docker.com/r/ictorn/pgb)
+- [Docker Hub](https://hub.docker.com/r/ictorn/pgb)  
   `docker run --pull always --rm ictorn/pgb`
