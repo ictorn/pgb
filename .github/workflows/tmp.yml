@@ -6,105 +6,91 @@ permissions:
   packages: write
 
 env:
-  REGISTRY_IMAGE: ictorn/pgb
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}:test
+  DH_IMAGE: ictorn/pgb:test
 
 jobs:
   build:
     strategy:
       matrix:
-        image: [ubuntu-24.04, ubuntu-24.04-arm]
+        platforms: [linux/amd64, linux/arm64]
         include:
-        - image: ubuntu-24.04
-          platform: linux/amd64
+        - platform: linux/amd64
+          image: ubuntu-24.04
           arch: x86_64
-        - image: ubuntu-24.04-arm
-          platform: linux/arm64
+        - platform: linux/arm64
+          image: ubuntu-24.04-arm
           arch: aarch64
     runs-on: ${{ matrix.image }}
     timeout-minutes: 30
-    name: build and push images by digest
+    name: create images
     steps:
-      - name: prepare
-        run: |
-          platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ${{ env.REGISTRY_IMAGE }}
-      - uses: docker/login-action@v3
-        name: login to Docker HUB
+          images: ${{ env.GHCR_IMAGE }}
+      - name: login to DH
+        uses: docker/login-action@v3
         with:
           username: ${{ vars.DH_USER }}
           password: ${{ secrets.DH_TOKEN }}
-      - name: build and push by digests
+      - name: login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: build and push images
         uses: docker/build-push-action@v6
         id: build
         with:
+          push: true
           context: .
           file: Dockerfile.test
           build-args: |
             ARCH=${{ matrix.arch }}
           platforms: ${{ matrix.platform }}
-          tags: ${{ env.REGISTRY_IMAGE }}
-          labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.annotations }}
-          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
-          provenance: false
-      - name: export digests
-        run: |
-          mkdir -p ${{ runner.temp }}/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "${{ runner.temp }}/digests/${digest#sha256:}"
-      - name: upload digests
-        uses: actions/upload-artifact@v4
-        with:
-          name: digests-${{ env.PLATFORM_PAIR }}
-          path: ${{ runner.temp }}/digests/*
-          if-no-files-found: error
-          retention-days: 1
-          
+          tags: ${{ env.DH_IMAGE }}-${{ matrix.arch }} ${{ env.GHCR_IMAGE }}-${{ matrix.arch }}
+          annotations: |
+            org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}
+            org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
+  
   merge:
     runs-on: ubuntu-24.04
     needs:
     - build
     steps:
-    - name: download digests
-      uses: actions/download-artifact@v4
-      with:
-        path: ${{ runner.temp }}/digests
-        pattern: digests-*
-        merge-multiple: true
     - uses: docker/setup-buildx-action@v3
-    - uses: docker/login-action@v3
-      name: login to Docker HUB
-      with:
-        username: ${{ vars.DH_USER }}
-        password: ${{ secrets.DH_TOKEN }}
     - uses: docker/metadata-action@v5
       id: meta
       with:
         images: ${{ env.REGISTRY_IMAGE }}
-    - name: create manifest and push
-      working-directory: ${{ runner.temp }}/digests
+    - name: login to DH
+      uses: docker/login-action@v3
+      with:
+        username: ${{ vars.DH_USER }}
+        password: ${{ secrets.DH_TOKEN }}
+    - name: create shared manifest for DH
       run: |
         docker buildx imagetools create \
-          --annotation "org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
-          --annotation "org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
-          --annotation "org.opencontainers.image.licenses=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.licenses'] }}" \
-          --annotation "org.opencontainers.image.authors=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.authors'] }}" \
-          -t ${{ env.REGISTRY_IMAGE }}:test \
-          $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+          --annotation "index:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
+          --annotation "index:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
+          -t ${{ env.DH_IMAGE }}:test \
+          ${{ env.GHCR_IDH_IMAGEMAGE }}:test-x86_64
+          ${{ env.DH_IMAGE }}:test-aarch64
     - name: login to GHCR
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    - name: push image to GHCR
+    - name: create shared manifest for GHCR
       run: |
         docker buildx imagetools create \
-          -t ghcr.io/${{ github.repository }}:test \
-          ${{ env.REGISTRY_IMAGE }}:test
+          --annotation "index:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
+          --annotation "index:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
+          -t ${{ env.GHCR_IMAGE }}:test \
+          ${{ env.GHCR_IMAGE }}:test-x86_64
+          ${{ env.GHCR_IMAGE }}:test-aarch64
