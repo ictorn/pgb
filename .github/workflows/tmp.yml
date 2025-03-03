@@ -80,7 +80,7 @@ jobs:
           --annotation "index:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
           --annotation "index:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
           -t ${{ env.DH_IMAGE }}:test \
-          ${{ env.GHCR_IDH_IMAGEMAGE }}:test-x86_64
+          ${{ env.DH_IMAGE }}:test-x86_64
           ${{ env.DH_IMAGE }}:test-aarch64
     - name: login to GHCR
       uses: docker/login-action@v3
