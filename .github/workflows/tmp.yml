@@ -54,7 +54,13 @@ jobs:
           annotations: |
             "org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}"
             "org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}"
-          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          outputs: |
+            type=image
+            push-by-digest=true
+            name-canonical=true
+            push=true
+            annotation-index.org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}
+            annotation-index.org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
       - name: export digests
         run: |
           mkdir -p ${{ runner.temp }}/digests
@@ -93,8 +99,8 @@ jobs:
       working-directory: ${{ runner.temp }}/digests 
       run: |
         docker buildx imagetools create \
-          --annotation "manifest-descriptor:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
-          --annotation "manifest-descriptor:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
+#          --annotation "manifest-descriptor:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
+#          --annotation "manifest-descriptor:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
           -t ${{ env.REGISTRY_IMAGE }}:test \
           $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
     - name: inspect image
@@ -109,8 +115,8 @@ jobs:
     - name: publish image in GHCR
       run: |
         docker buildx imagetools create \
-          --annotation "manifest-descriptor:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
-          --annotation "manifest-descriptor:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
+#          --annotation "manifest-descriptor:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
+#          --annotation "manifest-descriptor:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
           -t ghcr.io/${{ github.repository }}:test \
           ${{ env.REGISTRY_IMAGE }}:test
    
