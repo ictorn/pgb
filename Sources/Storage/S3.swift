@@ -4,8 +4,9 @@
 import Foundation
 import SotoS3
 import SotoS3FileTransfer
+import ArgumentParser
 
-struct S3 {
+struct S3: Storage {
     private let bucket: String
     private let transfer: S3FileTransferManager
     
@@ -31,10 +32,24 @@ struct S3 {
             destination.trimPrefix("/")
         }
 
-        try await transfer.copy(
-            from: file.path(),
-            to: S3File(url: "s3://\(bucket)/\(destination)")!
-        )
+        print("uploading backup file to S3...", terminator: " ")
+        fflush(stdout)
+
+        do {
+            try await transfer.copy(
+                from: file.path(),
+                to: S3File(url: "s3://\(bucket)/\(destination)")!
+            )
+
+            print("DONE")
+        } catch {
+            print("ERROR", terminator: "\n\n")
+
+            var stderr = StandardError()
+            print(error, to: &stderr)
+
+            throw ExitCode.failure
+        }
     }
 
     func cleanup(_ directory: String, keep: Int) async throws {
@@ -45,7 +60,7 @@ struct S3 {
         
         let dumps = try await transfer.listFiles(in: S3Folder(url: "s3://\(bucket)/\(directory)")!).filter { $0.file.extension == "pg" }
         if dumps.count > keep {
-            print("\nFound \(dumps.count) dumps. Keeping \(keep) newest.", terminator: "\n\n")
+            print("\nFound \(dumps.count) backups. Keeping \(keep) newest.", terminator: "\n\n")
 
             let count = dumps.count - keep
             for dump in dumps.min(count: count, sortedBy: { $0.file.name < $1.file.name }) {

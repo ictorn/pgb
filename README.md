@@ -1,5 +1,7 @@
 # Postgres Backup Tool
-Command line tool for creating PostgreSQL database backups (using the `pg_dump` utility) and automatically sending the generated dump to an external storage (e.g., S3). 
+Command line tool for creating PostgreSQL database backups (using the `pg_dump` utility) and automatically sending the generated dump to an external storage (e.g., S3).
+
+Name of the backup file will be set from current date and time expressed according to ISO 8601.
 
 ## Configuration
 Configuration is done by defining environment variables listed below.
@@ -24,8 +26,8 @@ USAGE: pgb [--pg-dump-path <path>] [--storage <string>] [--directory <path>] [--
 
 OPTIONS:
   --pg-dump-path    <path>      full path to pg_dump executable                 (default: /dump)
-  -s, --storage     <string>    storage location for dumped file [s3, local]    (default: s3)
-  -d, --directory   <path>      destination directory for dumped file           (default: .backups/db/)
-  -e, --extension   <string>    extension for dumped file                       (default: pgb)
+  -s, --storage     <string>    storage location for backup file [s3, local]    (default: s3)
+  -d, --directory   <path>      destination directory for backup file           (default: .backups/db/)
+  -e, --extension   <string>    extension for backup file                       (default: pgb)
   -k, --keep        <int>       number of backups to retain [set 0 to keep all] (default: 2)
 ```

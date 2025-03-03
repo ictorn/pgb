@@ -4,9 +4,19 @@
 import Foundation
 import ArgumentParser
 
+struct StandardError: TextOutputStream, Decodable {
+    func write(_ string: String) {
+        FileHandle.standardError.write(Data(string.utf8))
+    }
+}
+
 @main
 struct App: AsyncParsableCommand {
-    static var _commandName: String { "pgb" }
+    static let configuration = CommandConfiguration(
+        commandName: "pgb",
+        abstract: "Postgres Backup Tool",
+        version: "2025.3.3"
+    )
 
     enum StorageType: String, ExpressibleByArgument {
         case s3, local
@@ -15,20 +25,20 @@ struct App: AsyncParsableCommand {
     @Option(name: .long, help: .init("full path to pg_dump executable", valueName: "path"))
     var pgDumpPath: String = "/dump"
     
-    @Option(name: .shortAndLong, help: .init("storage location for dumped file [s3, local]", valueName: "string"))
+    @Option(name: .shortAndLong, help: .init("storage location for backup file [s3, local]", valueName: "string"))
     var storage: StorageType = .s3
     
-    @Option(name: .shortAndLong, help: .init("destination directory for dumped file", valueName: "path"))
+    @Option(name: .shortAndLong, help: .init("destination directory for backup file", valueName: "path"))
     var directory: String = ".backups/db/"
 
-    @Option(name: .shortAndLong, help: .init("extension for dumped file", valueName: "string"))
+    @Option(name: .shortAndLong, help: .init("extension for backup file", valueName: "string"))
     var `extension`: String = "pgb"
 
     @Option(name: .shortAndLong, help: .init("number of backups to retain [set 0 to keep all]", valueName: "int"))
     var keep: Int = 2
 
     private let env: Environment
-    
+
     init () {
         env = Environment()
     }
@@ -44,46 +54,31 @@ struct App: AsyncParsableCommand {
                 bucket: try env.get("PGB_S3_BUCKET", require: true)!
             )
             
-            print("uploading dump file to S3...", terminator: " ")
-            fflush(stdout)
-            
-            do {
-                try await s3.send(file: file, directory: directory)
-                print("DONE")
-            } catch {
-                print("ERROR", terminator: "\n\n")
-                print(error)
-            }
-            
+            try await s3.send(file: file, directory: directory)
+
             if keep > 0 {
                 try await s3.cleanup(directory, keep: keep)
             }
             
             try await s3.done()
-
         case .local:
-            let fileManager: FileManager = .default
-            
-            let to: URL
-            if directory.first == "/" {
-                to = URL(fileURLWithPath: directory)
-            } else {
-                to = URL(fileURLWithPath: fileManager.currentDirectoryPath).appendingPathComponent(directory)
-            }
+            let local = Local()
 
-            try fileManager.copyItem(at: file, to: to.appendingPathComponent(file.lastPathComponent))
+            try await local.send(file: file, directory: directory)
+
+            if keep > 0 {
+                try await local.cleanup(directory, keep: keep)
+            }
         }
     }
 
     func run() async throws {
+        var stderr = StandardError()
         let fileManager: FileManager = .default
 
         if fileManager.fileExists(atPath: pgDumpPath) {
-            let date = ISO8601DateFormatter()
-            date.timeZone = TimeZone(abbreviation: "UTC")
-
-            let name = date.string(from: Date()) + "." + `extension`
-            let file = URL(fileURLWithPath: fileManager.currentDirectoryPath).appendingPathComponent(name)
+            let name = ISO8601DateFormatter.string(from: Date(), timeZone: .gmt, formatOptions: [.withFullDate, .withTime, .withTimeZone]) + "." + `extension`
+            let file = fileManager.temporaryDirectory.appendingPathComponent(name)
 
             let dump = Process()
 
@@ -124,10 +119,14 @@ struct App: AsyncParsableCommand {
                 print(String(
                     data: pipe.fileHandleForReading.readDataToEndOfFile(),
                     encoding: .utf8
-                )!)
+                )!, to: &stderr)
+
+                throw ExitCode.failure
             }
         } else {
-            print("pg_dump not found")
+            print("pg_dump not found", to: &stderr)
+
+            throw ExitCode.failure
         }
     }
 }
