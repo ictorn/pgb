@@ -15,7 +15,7 @@ struct App: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "pgb",
         abstract: "Postgres Backup Tool",
-        version: "2025.3.3b"
+        version: "2025.3.3"
     )
 
     enum StorageType: String, ExpressibleByArgument {
