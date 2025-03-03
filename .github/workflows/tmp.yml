@@ -93,8 +93,7 @@ jobs:
           --annotation "index,manifest-descriptor:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
           --annotation "index,manifest-descriptor:org.opencontainers.image.licenses=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.licenses'] }}" \
           --annotation "index,manifest-descriptor:org.opencontainers.image.authors=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.authors'] }}" \
-          -t ${{ env.REGISTRY_IMAGE }}:${{ github.event.release.name }} \
-          -t ${{ env.REGISTRY_IMAGE }}:latest \
+          -t ${{ env.REGISTRY_IMAGE }}:test \
           $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
     - name: inspect image
       run: |
