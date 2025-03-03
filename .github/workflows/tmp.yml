@@ -6,12 +6,13 @@ permissions:
   packages: write
 
 env:
-  REGISTRY_IMAGE: ictorn/pgb:test
+  REGISTRY_IMAGE: ictorn/pgb
 
 jobs:
   build:
     strategy:
       matrix:
+        fail-fast: false
         platform: [linux/amd64, linux/arm64]
         include:
         - platform: linux/amd64
@@ -50,6 +51,9 @@ jobs:
             ARCH=${{ matrix.arch }}
           platforms: ${{ matrix.platform }}
           tags: ${{ env.REGISTRY_IMAGE }}
+          annotations: |
+            "org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}"
+            "org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}"
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
       - name: export digests
         run: |
