@@ -4,7 +4,6 @@ on: workflow_dispatch
 permissions:
   contents: read
   packages: write
-  attestations: write
 
 env:
   REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
@@ -40,7 +39,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
+      - name: build and push by digests
+        uses: docker/build-push-action@v6
+        id: build
         with:
           context: .
           file: Dockerfile.test
