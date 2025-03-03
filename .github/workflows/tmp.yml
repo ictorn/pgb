@@ -20,24 +20,17 @@ jobs:
     - name: get metadata
       id: meta
       uses: docker/metadata-action@v5
-      env:
-        DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
       with:
         images: ghcr.io/${{ github.repository }}:2025.3.3b-x86_64
     - name: set up docker buildx
       uses: docker/setup-buildx-action@v3
-    - name: show labels
-      run: echo "$IMAGE_DESC"
-      env:
-        IMAGE_DESC: "${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}"
-
-#    - name: create and push new manifest
-#      run: |
-#        docker buildx imagetools create \
-#          --annotation "index,manifest:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
-#          --annotation "index,manifest:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
-#          --annotation "index,manifest:org.opencontainers.image.licenses=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.licenses'] }}" \
-#          --annotation "index,manifest:org.opencontainers.image.authors=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.authors'] }}" \
-#          -t ghcr.io/${{ github.repository }}:test1 \
-#          ghcr.io/${{ github.repository }}:2025.3.3b-x86_64 \
-#          ghcr.io/${{ github.repository }}:2025.3.3b-aarch64
+    - name: create and push new manifest
+      run: |
+        docker buildx imagetools create \
+          --annotation "index:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
+          --annotation "index:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
+          --annotation "index:org.opencontainers.image.licenses=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.licenses'] }}" \
+          --annotation "index:org.opencontainers.image.authors=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.authors'] }}" \
+          -t ghcr.io/${{ github.repository }}:test1 \
+          ghcr.io/${{ github.repository }}:2025.3.3b-x86_64 \
+          ghcr.io/${{ github.repository }}:2025.3.3b-aarch64
