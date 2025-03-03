@@ -36,7 +36,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY_IMAGE }}
         env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest
       - name: login to DH
         uses: docker/login-action@v3
         with:
