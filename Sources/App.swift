@@ -15,7 +15,7 @@ struct App: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "pgb",
         abstract: "Postgres Backup Tool",
-        version: "2025.3.3a"
+        version: "2025.3.3b"
     )
 
     enum StorageType: String, ExpressibleByArgument {
@@ -23,7 +23,7 @@ struct App: AsyncParsableCommand {
     }
 
     @Option(name: .long, help: .init("full path to pg_dump executable", valueName: "path"))
-    var pgDumpPath: String = "/dump"
+    var pgDumpPath: String = "/usr/bin/pg_dump"
     
     @Option(name: .shortAndLong, help: .init("storage location for backup file [s3, local]", valueName: "string"))
     var storage: StorageType = .s3

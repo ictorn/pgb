@@ -26,7 +26,7 @@ Docker image available at [GitHub Container Registry](https://github.com/ictorn/
 USAGE: pgb [--pg-dump-path <path>] [--storage <string>] [--directory <path>] [--extension <string>] [--keep <int>]
 
 OPTIONS:
-  --pg-dump-path        <path>      full path to pg_dump executable                 (default: /dump)
+  --pg-dump-path        <path>      full path to pg_dump executable                 (default: /usr/bin/pg_dump)
   -s, --storage         <string>    storage location for backup file [s3, local]    (default: s3)
   -d, --directory       <path>      destination directory for backup file           (default: .backups/db/)
   -k, --keep            <int>       number of backups to retain [set 0 to keep all] (default: 2)
