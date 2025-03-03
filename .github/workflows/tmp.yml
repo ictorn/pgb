@@ -34,8 +34,6 @@ jobs:
         id: meta
         with:
           images: ${{ env.REGISTRY_IMAGE }}
-        env:
-          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
       - uses: docker/login-action@v3
         name: login to Docker HUB
         with:
@@ -54,6 +52,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          provenance: false
       - name: export digests
         run: |
           mkdir -p ${{ runner.temp }}/digests
@@ -92,10 +91,10 @@ jobs:
       working-directory: ${{ runner.temp }}/digests
       run: |
         docker buildx imagetools create \
-          --annotation "index,manifest-descriptor:org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
-          --annotation "index,manifest-descriptor:org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
-          --annotation "index,manifest-descriptor:org.opencontainers.image.licenses=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.licenses'] }}" \
-          --annotation "index,manifest-descriptor:org.opencontainers.image.authors=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.authors'] }}" \
+          --annotation "org.opencontainers.image.source=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.source'] }}" \
+          --annotation "org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}" \
+          --annotation "org.opencontainers.image.licenses=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.licenses'] }}" \
+          --annotation "org.opencontainers.image.authors=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.authors'] }}" \
           -t ${{ env.REGISTRY_IMAGE }}:test \
           $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
     - name: inspect image
