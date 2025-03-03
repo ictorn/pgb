@@ -6,15 +6,15 @@ Name of the backup file will be set from current date and time expressed accordi
 ## Configuration
 Configuration is done by defining environment variables listed below.
 
-### `pg_dump` tool
-- **PGB_CONNECTION_URI**: postgres [connection string](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING)
+### pg_dump utility
+- `PGB_CONNECTION_URI`: postgres [connection string](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING)
 
 ### S3 storage
-- **PGB_S3_ENDPOINT**: server endpoint
-- **PGB_S3_REGION**: region name
-- **PGB_S3_KEY**: access key
-- **PGB_S3_SECRET**: secret key
-- **PGB_S3_BUCKET**: bucket name
+- `PGB_S3_ENDPOINT`: server endpoint
+- `PGB_S3_REGION`: region name
+- `PGB_S3_KEY`: access key
+- `PGB_S3_SECRET`: secret key
+- `PGB_S3_BUCKET`: bucket name
 
 ## Usage
 Docker image available at [GitHub Container Registry](https://github.com/ictorn/pgb/pkgs/container/pgb).
