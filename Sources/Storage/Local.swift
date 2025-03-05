@@ -23,8 +23,7 @@ struct Local: Storage {
         } catch {
             print("ERROR")
 
-            var stderr = StandardError()
-            print(error, to: &stderr)
+            logger.error(.init(stringLiteral: error.localizedDescription))
 
             throw ExitCode.failure
         }

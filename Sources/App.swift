@@ -3,19 +3,16 @@
 
 import Foundation
 import ArgumentParser
+import Logging
 
-struct StandardError: TextOutputStream, Decodable {
-    func write(_ string: String) {
-        FileHandle.standardError.write(Data(string.utf8))
-    }
-}
+let logger = { Logger(label: "PGB") }()
 
 @main
 struct App: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "pgb",
         abstract: "Postgres Backup Tool",
-        version: "2025.3.3"
+        version: "2025.3.4"
     )
 
     enum StorageType: String, ExpressibleByArgument {
@@ -37,6 +34,9 @@ struct App: AsyncParsableCommand {
     @Flag(name: .long, help: "do not exclude public schema from backup")
     var keepPublicSchema: Bool = false
 
+    @Flag(name: .long, help: "force HTTP/1 for S3 connections")
+    var s3Http1: Bool = false
+
     private let env: Environment
 
     init () {
@@ -51,15 +51,24 @@ struct App: AsyncParsableCommand {
                 region: try env.get("PGB_S3_REGION", require: true)!,
                 key: try env.get("PGB_S3_KEY", require: true)!,
                 secret: try env.get("PGB_S3_SECRET", require: true)!,
-                bucket: try env.get("PGB_S3_BUCKET", require: true)!
+                bucket: try env.get("PGB_S3_BUCKET", require: true)!,
+                httpVersion: s3Http1 ? .http1Only : .automatic
             )
-            
-            try await s3.send(file: file, directory: directory)
 
-            if keep > 0 {
-                try await s3.cleanup(directory, keep: keep)
+            do {
+                try await s3.send(file: file, directory: directory)
+
+                if keep > 0 {
+                    try await s3.cleanup(directory, keep: keep)
+                }
+            } catch {
+                try await s3.done()
+
+                logger.error(.init(stringLiteral: error.localizedDescription))
+
+                throw ExitCode.failure
             }
-            
+
             try await s3.done()
         case .local:
             let local = Local()
@@ -73,7 +82,6 @@ struct App: AsyncParsableCommand {
     }
 
     func run() async throws {
-        var stderr = StandardError()
         let fileManager: FileManager = .default
 
         if fileManager.fileExists(atPath: pgDumpPath) {
@@ -120,15 +128,16 @@ struct App: AsyncParsableCommand {
                 try fileManager.removeItem(at: file)
             } else {
                 print("ERROR", terminator: "\n\n")
-                print(String(
+
+                logger.error(.init(stringLiteral: String(
                     data: pipe.fileHandleForReading.readDataToEndOfFile(),
                     encoding: .utf8
-                )!, to: &stderr)
+                )!))
 
                 throw ExitCode.failure
             }
         } else {
-            print("pg_dump not found", to: &stderr)
+            logger.error("pg_dump not found")
 
             throw ExitCode.failure
         }

@@ -27,6 +27,7 @@ OPTIONS:
   -d, --directory       <path>      destination directory for backup file           (default: .backups/db/)
   -k, --keep            <int>       number of backups to retain [set 0 to keep all] (default: 2)
   --keep-public-schema              do not exclude public schema from backup
+  --s3-http1                        force HTTP/1 for S3 connections
 ```
 
 ### Docker image available at:

@@ -5,14 +5,24 @@ import Foundation
 import SotoS3
 import SotoS3FileTransfer
 import ArgumentParser
+import AsyncHTTPClient
 
 struct S3: Storage {
     private let bucket: String
     private let transfer: S3FileTransferManager
     
-    init (endpoint: String, region: String, key: String, secret: String, bucket: String) {
+    init (endpoint: String, region: String, key: String, secret: String, bucket: String, httpVersion: HTTPClient.Configuration.HTTPVersion = .automatic) {
+        var config = HTTPClient.Configuration()
+        config.httpVersion = httpVersion
+
         transfer = S3FileTransferManager(s3: SotoS3.S3(
-            client: AWSClient(credentialProvider: .static(accessKeyId: key, secretAccessKey: secret)),
+            client: AWSClient(
+                credentialProvider: .static(accessKeyId: key, secretAccessKey: secret),
+                httpClient: HTTPClient(
+                    eventLoopGroupProvider: .singleton,
+                    configuration: config
+                )
+            ),
             region: Region(rawValue: region),
             endpoint: endpoint
         ))
@@ -35,21 +45,12 @@ struct S3: Storage {
         print("uploading backup file to S3...", terminator: " ")
         fflush(stdout)
 
-        do {
-            try await transfer.copy(
-                from: file.path(),
-                to: S3File(url: "s3://\(bucket)/\(destination)")!
-            )
+        try await transfer.copy(
+            from: file.path(),
+            to: S3File(url: "s3://\(bucket)/\(destination)")!
+        )
 
-            print("DONE")
-        } catch {
-            print("ERROR", terminator: "\n\n")
-
-            var stderr = StandardError()
-            print(error, to: &stderr)
-
-            throw ExitCode.failure
-        }
+        print("DONE")
     }
 
     func cleanup(_ directory: String, keep: Int) async throws {
@@ -73,5 +74,8 @@ struct S3: Storage {
         }
     }
 
-    func done() async throws { try await transfer.s3.client.shutdown() }
+    func done() async throws {
+        try await transfer.s3.client.httpClient.shutdown()
+        try await transfer.s3.client.shutdown()
+    }
 }
