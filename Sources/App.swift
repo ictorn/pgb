@@ -134,8 +134,10 @@ struct App: AsyncParsableCommand {
                 print("\(name) [\(formatter.string(fromByteCount: size))]", terminator: "\n\n")
                 
                 try await upload(file)
-                
-                try fileManager.removeItem(at: file)
+
+                if storage != .local {
+                    try fileManager.removeItem(at: file)
+                }
             } else {
                 print("ERROR", terminator: "\n\n")
 

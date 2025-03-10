@@ -15,7 +15,7 @@ struct Local: Storage {
             to = URL(fileURLWithPath: fileManager.currentDirectoryPath).appendingPathComponent(directory)
         }
 
-        print("copying backup file to destination directory...", terminator: " ")
+        print("moving backup file to destination directory...", terminator: " ")
         fflush(stdout)
 
         do {
@@ -28,7 +28,7 @@ struct Local: Storage {
             throw ExitCode.failure
         }
 
-        try fileManager.copyItem(at: file, to: to.appendingPathComponent(file.lastPathComponent))
+        try fileManager.moveItem(at: file, to: to.appendingPathComponent(file.lastPathComponent))
 
         print("DONE")
     }
