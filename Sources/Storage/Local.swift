@@ -3,6 +3,9 @@
 
 import Foundation
 import ArgumentParser
+#if !canImport(Darwin)
+import FoundationEssentials
+#endif
 
 struct Local: Storage {
     let fileManager: FileManager = .default
@@ -34,6 +37,11 @@ struct Local: Storage {
     }
 
     func cleanup(_ directory: String, keep: Int) async throws {
+        #if !canImport(Darwin)
+            print("Backups cleanup for local storage is only availabe on macOS.")
+            return
+        #endif
+
         let destination: URL
         if directory.first == "/" {
             destination = URL(fileURLWithPath: directory)
