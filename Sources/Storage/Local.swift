@@ -34,6 +34,34 @@ struct Local: Storage {
     }
 
     func cleanup(_ directory: String, keep: Int) async throws {
-        /// TODO
+        let destination: URL
+        if directory.first == "/" {
+            destination = URL(fileURLWithPath: directory)
+        } else {
+            destination = URL(fileURLWithPath: fileManager.currentDirectoryPath).appendingPathComponent(directory)
+        }
+
+        let dumps = try fileManager.contentsOfDirectory(
+            at: destination,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        ).filter { $0.pathExtension == "pgb" }
+
+        if dumps.count > keep {
+            print("\nFound \(dumps.count) backups. Keeping \(keep) newest.", terminator: "\n\n")
+
+            let count = dumps.count - keep
+
+            for file: URL in dumps.min(count: count, sortedBy: { $0.lastPathComponent < $1.lastPathComponent }) {
+                let resource = try file.resourceValues(forKeys: [.isRegularFileKey])
+                if resource.isRegularFile == true {
+                    print("deleting \"", file.lastPathComponent, "\"...", separator: "",  terminator: " ")
+                    fflush(stdout)
+
+                    try fileManager.removeItem(at: file)
+                    print("DONE")
+                }
+            }
+        }
     }
 }
