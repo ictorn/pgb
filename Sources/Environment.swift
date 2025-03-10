@@ -35,7 +35,7 @@ private struct DotEnv {
     func parse() async throws -> [String: String] {
         var variables: [String: String] = [:]
 
-        for try await line in file.lines {
+        for try await line in file.lines where !line.isEmpty {
             let substrings = line.split(separator: "=", maxSplits: 1)
 
             let key: String = String(substrings.first ?? "")
@@ -75,8 +75,7 @@ struct Environment: Decodable {
         }
     }
 
-    mutating func loadVariables(fromFile url: URL) async throws
-    {
+    mutating func loadVariables(fromFile url: URL) async throws {
         for variable in try await DotEnv(url).parse() {
             variables.updateValue(variable.value, forKey: variable.key.uppercased())
         }
