@@ -3,9 +3,6 @@
 
 import Foundation
 import ArgumentParser
-#if !canImport(Darwin)
-import FoundationEssentials
-#endif
 
 struct Local: Storage {
     let fileManager: FileManager = .default
