@@ -12,7 +12,7 @@ struct App: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "pgb",
         abstract: "Postgres Backup Tool",
-        version: "2025.3.4"
+        version: "2025.3.10"
     )
 
     enum StorageType: String, ExpressibleByArgument {
@@ -37,21 +37,24 @@ struct App: AsyncParsableCommand {
     @Flag(name: .long, help: "force HTTP/1 for S3 connections")
     var s3Http1: Bool = false
 
-    private let env: Environment
+    @Option(name: .shortAndLong, help: .init(".env file", valueName: "path"))
+    var env: String? = nil
+
+    private var environment: Environment
 
     init () {
-        env = Environment()
+        environment = Environment()
     }
 
     private func upload(_ file: URL) async throws {
         switch storage {
         case .s3:
             let s3 = S3(
-                endpoint: try env.get("PGB_S3_ENDPOINT", require: true)!,
-                region: try env.get("PGB_S3_REGION", require: true)!,
-                key: try env.get("PGB_S3_KEY", require: true)!,
-                secret: try env.get("PGB_S3_SECRET", require: true)!,
-                bucket: try env.get("PGB_S3_BUCKET", require: true)!,
+                endpoint: try environment.get("PGB_S3_ENDPOINT", require: true)!,
+                region: try environment.get("PGB_S3_REGION", require: true)!,
+                key: try environment.get("PGB_S3_KEY", require: true)!,
+                secret: try environment.get("PGB_S3_SECRET", require: true)!,
+                bucket: try environment.get("PGB_S3_BUCKET", require: true)!,
                 httpVersion: s3Http1 ? .http1Only : .automatic
             )
 
@@ -64,6 +67,7 @@ struct App: AsyncParsableCommand {
             } catch {
                 try await s3.done()
 
+                print()
                 logger.error(.init(stringLiteral: error.localizedDescription))
 
                 throw ExitCode.failure
@@ -81,8 +85,14 @@ struct App: AsyncParsableCommand {
         }
     }
 
-    func run() async throws {
+    mutating func run() async throws {
         let fileManager: FileManager = .default
+
+        if let env = self.env {
+            try await environment.loadVariables(
+                fromFile: env.hasPrefix("/") ? URL(fileURLWithPath: env) : URL(fileURLWithPath: fileManager.currentDirectoryPath).appendingPathComponent(env)
+            )
+        }
 
         if fileManager.fileExists(atPath: pgDumpPath) {
             let name = ISO8601DateFormatter.string(from: Date(), timeZone: .gmt, formatOptions: [.withFullDate, .withTime, .withTimeZone]) + ".pgb"
@@ -99,7 +109,7 @@ struct App: AsyncParsableCommand {
                 arguments.append("public")
             }
 
-            arguments.append(try env.get("PGB_CONNECTION_URI", require: true)!)
+            arguments.append(try environment.get("PGB_CONNECTION_URI", require: true)!)
 
             dump.arguments = arguments
 
