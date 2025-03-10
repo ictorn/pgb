@@ -35,6 +35,7 @@ private struct DotEnv {
     func parse() async throws -> [String: String] {
         var variables: [String: String] = [:]
 
+        #if canImport(Darwin)
         for try await line in file.lines where !line.isEmpty {
             let substrings = line.split(separator: "=", maxSplits: 1)
 
@@ -47,6 +48,7 @@ private struct DotEnv {
 
             variables.updateValue(value, forKey: key)
         }
+        #endif
 
         return variables
     }
