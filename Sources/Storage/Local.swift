@@ -34,11 +34,6 @@ struct Local: Storage {
     }
 
     func cleanup(_ directory: String, keep: Int) async throws {
-        #if !canImport(Darwin)
-            print("Backups cleanup for local storage is only availabe on macOS.")
-            return
-        #endif
-
         let destination: URL
         if directory.first == "/" {
             destination = URL(fileURLWithPath: directory)
