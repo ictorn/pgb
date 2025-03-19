@@ -88,11 +88,13 @@ struct App: AsyncParsableCommand {
     mutating func run() async throws {
         let fileManager: FileManager = .default
 
+        #if canImport(Darwin)
         if let env = self.env {
             try await environment.loadVariables(
                 fromFile: env.hasPrefix("/") ? URL(fileURLWithPath: env) : URL(fileURLWithPath: fileManager.currentDirectoryPath).appendingPathComponent(env)
             )
         }
+        #endif
 
         if fileManager.fileExists(atPath: pgDumpPath) {
             let name = ISO8601DateFormatter.string(from: Date(), timeZone: .gmt, formatOptions: [.withFullDate, .withTime, .withTimeZone]) + ".pgb"
