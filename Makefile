@@ -1,21 +1,21 @@
-install: release
-	install .build/release/pgb ~/.local/bin/pgb
+install:: release
+	install .build/release/pgb /Applications/CLI/pgb
 
-gzip: release
+gzip:: release
 	gzip -k .build/release/pgb
 	shasum -a 256 .build/release/pgb.gz
 
-build:
+build::
 	swift build
 
-update: 
+update::
 	swift package update
 
-release:
+release::
 	swift build -c release
 
-clean:
+clean::
 	swift build clean
 
-run:
+run::
 	swift run pgb
