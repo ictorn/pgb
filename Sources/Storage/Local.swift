@@ -15,7 +15,7 @@ struct Local: Storage {
             to = URL(fileURLWithPath: fileManager.currentDirectoryPath).appendingPathComponent(directory)
         }
 
-        print("moving backup file to destination directory...", terminator: " ")
+        print("moving the backup file to a destination directory...", terminator: " ")
         fflush(stdout)
 
         do {
