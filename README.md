@@ -19,16 +19,19 @@ Configuration is done by defining environment variables listed below.
 
 ## Usage
 ```txt
-pgb [--pg-dump-path <path>] [--storage <string>] [--directory <path>] [--extension <string>] [--keep <int>]
+pgb [--pg-dump-version <version>] [--pg-dump-path <path>] [--storage <string>] [--directory <path>] [--keep <int>] [--keep-public-schema] [--s3-http1] [--env <path>]
 
 OPTIONS:
-  --pg-dump-path        <path>      full path to pg_dump executable                 (default: /usr/bin/pg_dump)
-  -s, --storage         <string>    storage location for backup file [s3, local]    (default: s3)
-  -d, --directory       <path>      destination directory for backup file           (default: .backups/db/)
-  -k, --keep            <int>       number of backups to retain [set 0 to keep all] (default: 2)
-  --keep-public-schema              do not exclude public schema from backup
+  --pg-dump-version     <version>   pg_dump version to use [15, 16 or 17]                               (default: 17)
+  --pg-dump-path        <path>      full path to the pg_dump executable (overwrites --pg-dump-version)
+  -s, --storage         <string>    storage location for the backup file [s3, local]                    (default: s3)
+  -d, --directory       <path>      destination directory for the backup file                           (default: .backups/db/)
+  -k, --keep            <int>       number of backups to retain [set 0 to keep all]                     (default: 2)
+  --keep-public-schema              do not exclude public schema from the backup
   --s3-http1                        force HTTP/1 for S3 connections
-  -e, --env 			<path>      .env file
+  -e, --env             <path>      .env file
+  --version                         Show the version.
+  -h, --help                        Show help information.
 ```
 
 ### Docker image available at:

@@ -12,26 +12,29 @@ struct App: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "pgb",
         abstract: "Postgres Backup Tool",
-        version: "2025.3.10"
+        version: "2025.7.21"
     )
 
     enum StorageType: String, ExpressibleByArgument {
         case s3, local
     }
 
-    @Option(name: .long, help: .init("full path to pg_dump executable", valueName: "path"))
-    var pgDumpPath: String = "/usr/bin/pg_dump"
-    
-    @Option(name: .shortAndLong, help: .init("storage location for backup file [s3, local]", valueName: "string"))
+    @Option(name: .long, help: .init("pg_dump version to use [15, 16 or 17]", valueName: "version"))
+    var pgDumpVersion: Int8 = 17
+
+    @Option(name: .long, help: .init("full path to the pg_dump executable (overwrites --pg-dump-version)", valueName: "path"))
+    var pgDumpPath: String? = nil
+
+    @Option(name: .shortAndLong, help: .init("storage location for the backup file [s3, local]", valueName: "string"))
     var storage: StorageType = .s3
     
-    @Option(name: .shortAndLong, help: .init("destination directory for backup file", valueName: "path"))
+    @Option(name: .shortAndLong, help: .init("destination directory for the backup file", valueName: "path"))
     var directory: String = ".backups/db/"
 
     @Option(name: .shortAndLong, help: .init("number of backups to retain [set 0 to keep all]", valueName: "int"))
     var keep: Int = 2
 
-    @Flag(name: .long, help: "do not exclude public schema from backup")
+    @Flag(name: .long, help: "do not exclude public schema from the backup")
     var keepPublicSchema: Bool = false
 
     @Flag(name: .long, help: "force HTTP/1 for S3 connections")
@@ -40,11 +43,7 @@ struct App: AsyncParsableCommand {
     @Option(name: .shortAndLong, help: .init(".env file", valueName: "path"))
     var env: String? = nil
 
-    private var environment: Environment
-
-    init () {
-        environment = Environment()
-    }
+    private var environment: Environment = Environment()
 
     private func upload(_ file: URL) async throws {
         switch storage {
@@ -95,6 +94,13 @@ struct App: AsyncParsableCommand {
             )
         }
         #endif
+
+        let pgDumpPath: String
+        if self.pgDumpPath == nil {
+            pgDumpPath = "/usr/bin/pg_dump@" + String(self.pgDumpVersion)
+        } else {
+            pgDumpPath = self.pgDumpPath!
+        }
 
         if fileManager.fileExists(atPath: pgDumpPath) {
             let name = ISO8601DateFormatter.string(from: Date(), timeZone: .gmt, formatOptions: [.withFullDate, .withTime, .withTimeZone]) + ".pgb"
