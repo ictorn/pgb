@@ -51,6 +51,7 @@ jobs:
         push: true
         provenance: false
         context: .
+        file: ./Containerfile
         build-args: |
           ARCH=${{ matrix.arch }}
         platforms: ${{ matrix.platform }}
